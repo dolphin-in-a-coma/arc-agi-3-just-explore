@@ -45,6 +45,9 @@ def cleanup(
         if scorecard:
             swarm.cleanup(scorecard)
 
+    logger.info("Received SIGINT, exiting...")
+    sys.exit(0)
+
 
 def main() -> None:
     log_level = logging.INFO
