@@ -5,6 +5,7 @@ load_dotenv(dotenv_path=".env-example")
 load_dotenv(dotenv_path=".env", override=True)
 
 import argparse
+import json
 import logging
 import os
 import signal
@@ -40,12 +41,15 @@ def cleanup(
     signum: Optional[int],
     frame: Optional[FrameType],
 ) -> None:
+    logger.info("Received SIGINT, exiting...")
+
     if swarm.card_id:
         scorecard = swarm.close_scorecard(swarm.card_id)
         if scorecard:
+            logger.info("--- EXITING SCORECARD REPORT ---")
+            logger.info(json.dumps(scorecard.model_dump(), indent=2))
             swarm.cleanup(scorecard)
 
-    logger.info("Received SIGINT, exiting...")
     sys.exit(0)
 
 
