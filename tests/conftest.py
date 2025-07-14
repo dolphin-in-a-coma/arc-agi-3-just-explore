@@ -67,6 +67,6 @@ def use_env_vars(monkeypatch):
     if not os.environ.get("SCHEME"):
         monkeypatch.setenv("SCHEME", "https")
     if not os.environ.get("HOST"):
-        monkeypatch.setenv("HOST", "sandbox.internal.arc-prize.com")
+        monkeypatch.setenv("HOST", "three.arcprize.org")
     if not os.environ.get("PORT"):
         monkeypatch.setenv("PORT", "443")
