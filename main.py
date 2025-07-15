@@ -147,11 +147,13 @@ def main() -> None:
         )
         return
 
+    # Default tags always include agent type
+    tags = ["agent", args.agent]
+    
+    # Append user-provided tags if any
     if args.tags:
-        tags = [tag.strip() for tag in args.tags.split(",")]
-    else:
-        # Default tags
-        tags = ["agent", args.agent]
+        user_tags = [tag.strip() for tag in args.tags.split(",")]
+        tags.extend(user_tags)
 
     swarm = Swarm(
         args.agent,
