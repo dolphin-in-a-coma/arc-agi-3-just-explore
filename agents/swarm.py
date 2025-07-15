@@ -102,17 +102,7 @@ class Swarm:
         return scorecard
 
     def open_scorecard(self) -> str:
-        # Check if this is a playback agent and set appropriate tags
-        if self.agent_name.endswith(".recording.jsonl"):
-            # Extract GUID from playback filename
-            # Format: game.agent.count.guid.recording.jsonl
-            parts = self.agent_name.split(".")
-            guid = parts[-3] if len(parts) >= 4 else "unknown"
-            tags = self.tags
-        else:
-            tags = self.tags
-
-        json_str = json.dumps({"tags": tags})
+        json_str = json.dumps({"tags": self.tags})
 
         r = self._session.post(
             f"{self.ROOT_URL}/api/scorecard/open",

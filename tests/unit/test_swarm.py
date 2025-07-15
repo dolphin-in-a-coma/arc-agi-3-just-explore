@@ -232,9 +232,9 @@ class TestSwarmTags:
         )
         
         card_id = swarm.open_scorecard()
+        assert card_id == "test-card-123"
         
+        mock_post.assert_called_once()
         call_args = mock_post.call_args
         json_data = call_args[1]["json"]
-        
         assert json_data["tags"] == combined_tags
-        assert json_data["tags"] == ["agent", "random", "experiment1", "version2"]
