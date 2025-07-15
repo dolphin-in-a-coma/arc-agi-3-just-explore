@@ -48,8 +48,7 @@ class TestSwarmScorecard:
 
         json_data = call_args[1]["json"]
         tags = json_data["tags"]
-        assert "agent" in tags
-        assert "random" in tags
+        assert tags == []  # Default is empty tags list
 
         mock_post.reset_mock()
         mock_response.json.return_value = {
@@ -157,3 +156,54 @@ class TestSwarmCleanup:
 
         delattr(swarm, "_session")
         swarm.cleanup()
+
+
+@pytest.mark.unit
+class TestSwarmTags:   
+    @patch("agents.swarm.requests.Session.post")
+    def test_open_scorecard_with_custom_tags(self, mock_post):
+        """Test that custom tags are sent when opening a scorecard"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"card_id": "test-card-123"}
+        mock_post.return_value = mock_response
+        
+        custom_tags = ["experiment1", "version2", "test"]
+        swarm = Swarm(
+            agent="random", 
+            ROOT_URL="https://example.com", 
+            games=["game1"],
+            tags=custom_tags
+        )
+        
+        card_id = swarm.open_scorecard()
+        assert card_id == "test-card-123"
+        
+        # Verify the API was called with the correct tags
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        json_data = call_args[1]["json"]
+        
+        assert json_data["tags"] == custom_tags
+    
+    @patch("agents.swarm.requests.Session.post")
+    def test_open_scorecard_with_empty_tags(self, mock_post):
+        """Test that empty tags list is sent when no tags are provided"""
+        mock_response = Mock()
+        mock_response.json.return_value = {"card_id": "test-card-123"}
+        mock_post.return_value = mock_response
+        
+        swarm = Swarm(
+            agent="random", 
+            ROOT_URL="https://example.com", 
+            games=["game1"]
+        )
+        
+        card_id = swarm.open_scorecard()
+        assert card_id == "test-card-123"
+        
+        # Verify the API was called with empty tags
+        mock_post.assert_called_once()
+        call_args = mock_post.call_args
+        json_data = call_args[1]["json"]
+        
+        assert json_data["tags"] == []

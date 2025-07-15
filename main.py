@@ -87,6 +87,13 @@ def main() -> None:
         "--game",
         help="Choose a specific game_id for the agent to play. If none specified, an agent swarm will play all available games.",
     )
+    parser.add_argument(
+        "-t",
+        "--tags", 
+        type=str,
+        help="Comma-separated list of tags for the scorecard (e.g., 'experiment,v1.0')",
+        default=None,
+    )
 
     args = parser.parse_args()
 
@@ -140,10 +147,17 @@ def main() -> None:
         )
         return
 
+    if args.tags:
+        tags = [tag.strip() for tag in args.tags.split(",")]
+    else:
+        # Default tags
+        tags = ["agent", args.agent]
+
     swarm = Swarm(
         args.agent,
         ROOT_URL,
         games,
+        tags=tags,  # Pass tags as keyword argument
     )
     agent_thread = threading.Thread(target=partial(run_agent, swarm))
     agent_thread.daemon = True  # die when the main thread dies

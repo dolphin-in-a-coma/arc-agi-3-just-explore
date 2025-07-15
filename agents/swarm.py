@@ -37,6 +37,7 @@ class Swarm:
         agent: str,
         ROOT_URL: str,
         games: list[str],
+        tags: list[str] = [],
     ) -> None:
         from . import AVAILABLE_AGENTS
 
@@ -53,6 +54,7 @@ class Swarm:
         }
         self._session = requests.Session()
         self._session.headers.update(self.headers)
+        self.tags = tags
 
     def main(self) -> Scorecard:
         """The main orchestration loop, continues until all agents are done."""
@@ -106,9 +108,9 @@ class Swarm:
             # Format: game.agent.count.guid.recording.jsonl
             parts = self.agent_name.split(".")
             guid = parts[-3] if len(parts) >= 4 else "unknown"
-            tags = ["agent", "playback", guid]
+            tags = self.tags
         else:
-            tags = ["agent", self.agent_name]
+            tags = self.tags
 
         json_str = json.dumps({"tags": tags})
 
