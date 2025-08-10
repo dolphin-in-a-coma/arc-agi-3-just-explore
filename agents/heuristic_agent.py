@@ -89,6 +89,8 @@ class HeuristicAgent(Agent):
 
         self.level_first_frame = None
 
+        self.failed = False
+        self.level_up = True
 
 
 
@@ -153,7 +155,7 @@ class HeuristicAgent(Agent):
 
 
     def choose_action(
-        self, frames: list[FrameData], latest_frame: FrameData, level_up: bool = False
+        self, frames: list[FrameData], latest_frame: FrameData
     ) -> GameAction:
 
         if latest_frame.state in [GameState.NOT_PLAYED, GameState.GAME_OVER]:
@@ -162,6 +164,10 @@ class HeuristicAgent(Agent):
             action = GameAction.RESET
             self.last_hashed_frame = None
             self.last_action = None
+            if self.failed:
+                self.level_up = True
+                self.failed = False
+
             return action
 
         if self.DEBUG_PLOTS: self.visualize_last_frame(frames)
@@ -173,7 +179,7 @@ class HeuristicAgent(Agent):
             # NOTE: sometimes there are multiple frames, we take the last one
             if self.DEBUG_PRINTS: print(latest_frame_np.shape)
 
-            if level_up:
+            if self.level_up:
                 segmented_frame_for_status_bars, frame_segments_for_status_bars = self.frame_processor.segment_frame(latest_frame_np)
                 status_bar_segments_list, status_bar_mask = self.frame_processor.identify_status_bars(segmented_frame_for_status_bars, frame_segments_for_status_bars)
                 self.status_bar_mask = status_bar_mask
@@ -216,7 +222,7 @@ class HeuristicAgent(Agent):
             latest_frame_np[latest_frame_np == 16] = 0 # to ensure there is no overflow 
             hashed_frame = self.frame_processor.hash_frame(latest_frame_np)
 
-            if level_up:
+            if self.level_up:
                 self.level_first_frame = hashed_frame
                 self.graph_explorer.reset()
                 self.graph_explorer.initialize(start_node=hashed_frame, num_candidates=num_actions, group2remaining_candidate_ids=action_groups)
@@ -224,7 +230,7 @@ class HeuristicAgent(Agent):
                 # TODO: Add a function to assign candidate groups!
             
 
-            if self.last_hashed_frame is not None and not level_up:
+            if self.last_hashed_frame is not None and not self.level_up:
                 transition = hashed_frame != self.last_hashed_frame 
                 suspicious_transition = hashed_frame == self.level_first_frame and num_frames > 1
                 # if num_frames > 1:
@@ -412,25 +418,29 @@ class HeuristicAgent(Agent):
         """The main agent loop. Play the game_id until finished, then exits."""
         self.timer = time.time()
         score = 0
-        level_up = True
         while (
             not self.is_done(self.frames, self.frames[-1])
             and self.action_counter <= self.MAX_ACTIONS
             # TODO: add some limits for levels, after which we transition to another method
         ):
-            action = self.choose_action(self.frames, self.frames[-1], level_up=level_up)
-            if frame := self.take_action(action): # NOTE: What does ":=" do?
-                new_score = frame.score
-                if new_score > score:
-                    level_up = True
-                    self.status_bar_mask = None
-                elif self.status_bar_mask is not None:
-                    level_up = False
-                score = new_score
-                self.append_frame(frame) # NOTE: Where do we append the frame?
-                logger.info(
-                    f"{self.game_id} - {action.name}: count {self.action_counter}, score {frame.score}, avg fps {self.fps})"
-                )
+            try:
+                action = self.choose_action(self.frames, self.frames[-1])
+                if frame := self.take_action(action): # NOTE: What does ":=" do?
+                    new_score = frame.score
+                    if new_score > score:
+                        self.level_up = True
+                        self.status_bar_mask = None
+                    elif self.status_bar_mask is not None:
+                        self.level_up = False
+                    score = new_score
+                    self.append_frame(frame) # NOTE: Where do we append the frame?
+                    logger.info(
+                        f"{self.game_id} - {action.name}: count {self.action_counter}, score {frame.score}, avg fps {self.fps})"
+                    )
+            except Exception as e:
+                self.failed = True
+                self.level_up = True
+                print(f"Error: {e}, re-initializing the GraphExplorer")
             self.action_counter += 1
 
         self.cleanup()
