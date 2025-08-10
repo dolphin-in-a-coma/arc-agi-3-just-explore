@@ -61,6 +61,9 @@ class HeuristicAgent(Agent):
 
     N_GROUPS: int = 5
 
+    minimal_step_time: float = 0.31 # seconds
+    time_start = time.time()
+
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         seed = int(time.time() * 1000000) + hash(self.game_id) % 1000000
@@ -91,6 +94,8 @@ class HeuristicAgent(Agent):
 
         self.failed = False
         self.level_up = True
+
+        self.last_action_object = GameAction.RESET
 
 
 
@@ -157,6 +162,14 @@ class HeuristicAgent(Agent):
     def choose_action(
         self, frames: list[FrameData], latest_frame: FrameData
     ) -> GameAction:
+
+        time_diff = time.time() - self.time_start
+        if time_diff < self.minimal_step_time:
+            time.sleep(self.minimal_step_time - time_diff)
+            self.time_start = time.time()
+
+        # if self.action_counter == 100:
+        #     raise ValueError("Error to check the robustness")
 
         if latest_frame.state in [GameState.NOT_PLAYED, GameState.GAME_OVER]:
             # if game is not started (at init or after GAME_OVER) we need to reset
@@ -360,6 +373,7 @@ class HeuristicAgent(Agent):
                 
             self.last_hashed_frame = hashed_frame
             self.last_action = action_id
+            self.last_action_object = action
 
             if self.verbose_level >= 1:
                 print(action.reasoning)
@@ -425,22 +439,24 @@ class HeuristicAgent(Agent):
         ):
             try:
                 action = self.choose_action(self.frames, self.frames[-1])
-                if frame := self.take_action(action): # NOTE: What does ":=" do?
-                    new_score = frame.score
-                    if new_score > score:
-                        self.level_up = True
-                        self.status_bar_mask = None
-                    elif self.status_bar_mask is not None:
-                        self.level_up = False
-                    score = new_score
-                    self.append_frame(frame) # NOTE: Where do we append the frame?
-                    logger.info(
-                        f"{self.game_id} - {action.name}: count {self.action_counter}, score {frame.score}, avg fps {self.fps})"
-                    )
             except Exception as e:
                 self.failed = True
                 self.level_up = True
                 print(f"Error: {e}, re-initializing the GraphExplorer")
+                action = self.last_action_object
+            if frame := self.take_action(action): # NOTE: What does ":=" do?
+                new_score = frame.score
+                if new_score > score:
+                    self.level_up = True
+                    self.status_bar_mask = None
+                elif self.status_bar_mask is not None:
+                    self.level_up = False
+                score = new_score
+                self.append_frame(frame) # NOTE: Where do we append the frame?
+                logger.info(
+                    f"{self.game_id} - {action.name}: count {self.action_counter}, score {frame.score}, avg fps {self.fps})"
+                )
+
             self.action_counter += 1
 
         self.cleanup()
