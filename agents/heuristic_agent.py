@@ -166,7 +166,7 @@ class HeuristicAgent(Agent):
         time_diff = time.time() - self.time_start
         if time_diff < self.minimal_step_time:
             time.sleep(self.minimal_step_time - time_diff)
-            self.time_start = time.time()
+        self.time_start = time.time()
 
         # if self.action_counter == 100:
         #     raise ValueError("Error to check the robustness")
