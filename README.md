@@ -1,114 +1,73 @@
 # Explore It Till You Solve It
-Exploration Only Solution for ARC-AGI-3
+Exploration-only solution for ARC-AGI-3
 
-## Quickstart
+## Quickstart 
+This repository was originally forked from [the challenge repo](https://github.com/arcprize/ARC-AGI-3-Agents). The setup mostly mirrors the original one. Alternatively, you can run the code in [Google Colab](https://colab.research.google.com/github/dolphin-in-a-coma/arc-agi-3-just-explore/blob/main/ARC_AGI_3_Solve_by_Exploration.ipynb).
 
 Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not already installed.
 
-1. Clone the ARC-AGI-3-Agents repo and enter the directory.
+1. Clone this repository and enter the directory.
 
 ```bash
-git clone https://github.com/arcprize/ARC-AGI-3-Agents.git
-cd ARC-AGI-3-Agents
+git clone https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore.git
+cd arc-agi-3-just-explore
 ```
 
-2. Copy .env-example to .env
+2. Copy `.env.example` to `.env`.
 
 ```bash
-cp .env-example .env
+cp .env.example .env
 ```
 
-3. Get an API key from the [ARC-AGI-3 Website](https://three.arcprize.org/) and set it as an environment variable in your .env file.
+3. Get an API key from the [ARC-AGI-3 Website](https://three.arcprize.org/) and set it in your `.env` file.
 
 ```bash
 export ARC_API_KEY="your_api_key_here"
 ```
 
-4. Run the random agent (generates random actions) against the ls20 game.
+4. Run the agent. The command below runs the swarm across all games unless a specific game is provided with `--game`.
 
 ```bash
-uv run main.py --agent=random --game=ls20
+uv run main.py --agent=heuristicagent
 ```
 
-For more information, see the [documentation](https://three.arcprize.org/docs#quick-start) or the [tutorial video](https://youtu.be/xEVg9dcJMkw).
+For more information, see the [original documentation](https://three.arcprize.org/docs#quick-start) or the [tutorial video](https://youtu.be/xEVg9dcJMkw).
 
-## Observability (Optional)
+## The method
 
-[AgentOps](https://agentops.ai/) is an observability platform designed for providing real-time monitoring, debugging, and analytics for your agent's behavior, helping you understand how your agents perform and make decisions.
+### Motivation
+The initial idea was to make LLMs interact with the environment more effectively by:
+- Providing a textual description of the environment.
+- Introducing meaningful click actions (e.g., click an object instead of raw coordinates).
+- Building a replay buffer for in-context reinforcement learning.
 
-### Installation
+After experiments on simple levels (passing a winning path from a previous level and providing a list of clickable objects), this direction ended up less promising. In parallel, a brute-force exploration method emerged and performed better for the public tasks.
 
-AgentOps is already included as an optional dependency in this project. To install it:
+### Description
+The method has two parts:
+- Frame Processor
+- Level Graph Explorer
 
-```bash
-uv sync --extra agentops
-```
+#### Frame Processor
+Basic image processing aims to reduce irrelevant visual variability and focus exploration on actionable regions. It's done by:
+- Segmenting the frame into single-color connected components.
+- Detecting and masking likely status bars (e.g., remaining steps).
+- For click-controlled games, grouping segments into five priority tiers based on button likelihood (average size, salient color; lowest tier includes segments likely to be status bars).
+- Hashing the masked image for use by the graph explorer.
 
-Or if you're installing manually:
+#### Level Graph Explorer
+From each known frame (graph node), the explorer maintains paths to frontier frames—those with untested actions (graph edges). For each frame, it tracks:
+- The list of possible actions (clicks for `ft09`/`cv33`, arrows for `ls20`).
+- For each action: priority level, tested flag, transition result, destination frame, and distance to the nearest frontier.
 
-```bash
-pip install -U agentops
-```
+Actions are taken from the highest-priority group with remaining untested actions; only when all such actions are exhausted across the graph do we proceed to lower-priority groups. Some utility functions are duplicated, and distances are recomputed more often than necessary - this can be cleaned up.
 
-### Getting Your API Key
+### Thoughts
+This is a limited but effective approach that approaches the limits of brute-force solving for these games. The goal is simply to be more intelligent than a purely random agent.
 
-1. Visit [app.agentops.ai](https://app.agentops.ai) and create an account if you haven't already
-2. Once logged in, click on "New Project" to create a project for your ARC-AGI-3 agents
-3. Give your project a meaningful name (e.g., "ARC-AGI-3-Agents")
-4. After creating the project, you'll see your project dashboard
-5. Click on the "API Keys" tab on the left side & copy the API key
+It can be tricked if the status bar differs significantly from the public games (e.g., integrated into the scene rather than at the edge). In such cases, the method degrades toward more random exploration because the state space implicitly includes many status bar variants. Additionally, large state spaces (e.g., `ft09` levels 3–4) can make the method intractable. Non-determinism or partial observations can also cause issues.
 
-### Configuration
-
-1. Add your AgentOps API key to your `.env` file:
-
-```bash
-AGENTOPS_API_KEY=aos_your_api_key_here
-```
-
-2. The AgentOps integration is automatically initialized when you run an agent. The tracing decorator `@trace_agent_session` is already applied to agent execution methods in the codebase.
-
-3. When you run your agent, you'll see AgentOps initialization messages and session URLs in the console:
-
-```bash
-🖇 AgentOps: Session Replay for your-agent-name: https://app.agentops.ai/sessions?trace_id=xxxxx
-```
-
-4. Click on the session URL to view real-time traces of your agent's execution. You can also view the traces in the AgentOps dashboard by locating the trace ID in the "Traces" tab.
-
-### Using AgentOps with Custom Agents
-
-If you're creating a custom agent, the tracing is automatically applied through the `@trace_agent_session` decorator on the `main()` method. No additional code changes are needed.
-
-## Contest Submission
-
-To submit your agent for the ARC-AGI-3 competition, please use this form: https://forms.gle/wMLZrEFGDh33DhzV9.
-
-## Contributing
-
-We welcome contributions! To contribute to ARC-AGI-3-Agents, please follow these steps:
-
-1.  Fork the repository and create a new branch for your feature or bugfix.
-2.  Make your changes and ensure that all tests pass, you are welcome to add more tests for your specific fixes.
-3.  This project uses `ruff` for linting and formatting. Please set up the pre-commit hooks to ensure your contributions match the project's style.
-    ```bash
-    pip install pre-commit
-    pre-commit install
-    ```
-4.  Write clear commit messages describing your changes.
-5.  Open a pull request with a description of your changes and the motivation behind them.
-
-If you have questions or need help, feel free to open an issue.
-
-## Tests
-
-To run the tests, you will need to have `pytest` installed. Run the tests like this:
-
-```bash
-pytest
-```
-
-For more information on tests, please see the [tests documentation](https://three.arcprize.org/docs#testing).
+A natural extension would be to learn simple world models that predict the next frame from the current frame and action. This could improve sample efficiency by roughly the average number of actions per frame. However, it’s unclear whether such models would help prioritize exploration of “interesting” states in these games by favoring higher uncertainty or surprise for the agent. For example, why should the correct pattern in `ft09` be more surprising than an incorrect one?
 
 ## License
 
