@@ -4,9 +4,9 @@ from agents.tracing import trace_agent_session
 from agents.structs import FrameData, GameAction, GameState
 from graph_explorer import GraphExplorer
 import logging
-import os
-import json
-import textwrap
+# import os
+# import json
+# import textwrap
 import numpy as np
 
 from typing import Any
@@ -59,8 +59,7 @@ class HeuristicAgent(Agent):
             }
 
 
-
-    # DO_OBSERVATION: bool = True
+    N_GROUPS: int = 5
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -86,7 +85,7 @@ class HeuristicAgent(Agent):
 
         self.verbose_level = 0
 
-        self.graph_explorer = GraphExplorer(verbose_level=self.verbose_level, n_groups=4) # TODO: switch to 4
+        self.graph_explorer = GraphExplorer(verbose_level=self.verbose_level, n_groups=self.N_GROUPS)
 
         self.level_first_frame = None
 
@@ -193,9 +192,9 @@ class HeuristicAgent(Agent):
             if 6 in available_actions:
                 num_actions += len(frame_segments)
                 num_click_actions += len(frame_segments)
-                action_groups = self.frame_processor.frame_segments_to_action_groups(frame_segments)
+                action_groups = self.frame_processor.frame_segments_to_action_groups(frame_segments, n_groups=self.N_GROUPS)
             else:
-                action_groups = [set(), set(), set(), set()]
+                action_groups = [set() for _ in range(self.N_GROUPS)]
 
             for action_id in available_actions:
                 if action_id in self.SIMPLE_ACTION_ID2GAME_ACTION:
@@ -714,7 +713,7 @@ class FrameProcessor:
         Parameters
         ----------
         frame : np.ndarray
-            The original H×W greyscale (label-value) image.
+            The original HxW greyscale (label-value) image.
         components : list[dict]
             Output of `segment_frame()`.
         cmap : str, optional
@@ -811,7 +810,7 @@ class FrameProcessor:
                             ).hexdigest()
 
 
-    def frame_segments_to_action_groups(self, frame_segments: list[dict]) -> list[list[int]]:
+    def frame_segments_to_action_groups(self, frame_segments: list[dict], n_groups: int) -> list[list[int]]:
         """
         Assign actions to groups
         """
@@ -819,6 +818,7 @@ class FrameProcessor:
         group_1_segments = set()
         group_2_segments = set()
         group_3_segments = set()
+        group_4_segments = set()
 
         for segment_id, segment in enumerate(frame_segments):
             x_width, y_width = segment["bounding_box"][2] - segment["bounding_box"][0] + 1, segment["bounding_box"][3] - segment["bounding_box"][1] + 1
@@ -826,16 +826,21 @@ class FrameProcessor:
             is_medium_width = self.minimal_width <= x_width <= self.maximal_width and self.minimal_width <= y_width <= self.maximal_width
             is_status_bar = segment["color"] == self.status_bar_color
 
+            assert n_groups == 5, "Only 5 groups are supported for now"
+
             if is_salient and is_medium_width:
                 group_0_segments.add(segment_id)
-            elif is_salient or is_medium_width:
+            elif is_medium_width:
                 group_1_segments.add(segment_id)
-            elif not is_status_bar:
+            elif is_salient:
                 group_2_segments.add(segment_id)
-            else:
+            elif not is_status_bar:
                 group_3_segments.add(segment_id)
+            else:
+                group_4_segments.add(segment_id)
 
-        groups2segments = [group_0_segments, group_1_segments, group_2_segments, group_3_segments]
+        groups2segments = [group_0_segments, group_1_segments, group_2_segments, group_3_segments, group_4_segments]
+        # groups2segments = groups2segments[::-1] # NOTE: temporary to check the robustness 
 
         return groups2segments
 

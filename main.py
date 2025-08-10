@@ -92,6 +92,7 @@ def main() -> None:
     parser.add_argument(
         "-a",
         "--agent",
+        default="heuristicagent",
         choices=AVAILABLE_AGENTS.keys(),
         help="Choose which agent to run.",
     )
@@ -113,6 +114,8 @@ def main() -> None:
     if not args.agent:
         logger.error("An Agent must be specified")
         return
+    
+    print(f"args: {args}")
 
     print(f"{ROOT_URL}/api/games")
 
