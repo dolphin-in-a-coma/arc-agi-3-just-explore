@@ -1,8 +1,9 @@
-# ARC-AGI-3-Agents
+# Explore It Till You Solve It
+Exploration Only Solution for ARC-AGI-3
 
 ## Quickstart
 
-Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not aready installed.
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not already installed.
 
 1. Clone the ARC-AGI-3-Agents repo and enter the directory.
 
