@@ -1,5 +1,6 @@
 # Explore It Till You Solve It
-Exploration-only solution for ARC-AGI-3
+Exploration-only solution for ARC-AGI-3.
+
 A bit more detailed description is in the [Report Draft](https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore/blob/main/Report_Draft.pdf). It does contain quite some LLMease. 
 
 ## Quickstart 
