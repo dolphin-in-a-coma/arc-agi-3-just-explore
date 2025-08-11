@@ -60,9 +60,8 @@ class HeuristicAgent(Agent):
 
 
     N_GROUPS: int = 5
+    TOTAL_TIME_ALLOWED = 7.9 * 60 * 60 # 7.9 hours
 
-    minimal_step_time: float = 0.31 # seconds
-    time_start = time.time()
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
@@ -96,6 +95,13 @@ class HeuristicAgent(Agent):
         self.level_up = True
 
         self.last_action_object = GameAction.RESET
+
+        self.time_start = time.time()
+        self.last_time = time.time()
+        self.minimal_step_time: float = 0.31 # seconds
+        
+        print(f'Will run for {self.TOTAL_TIME_ALLOWED/60/60} hours')
+
 
 
 
@@ -163,10 +169,10 @@ class HeuristicAgent(Agent):
         self, frames: list[FrameData], latest_frame: FrameData
     ) -> GameAction:
 
-        time_diff = time.time() - self.time_start
+        time_diff = time.time() - self.last_time
         if time_diff < self.minimal_step_time:
             time.sleep(self.minimal_step_time - time_diff)
-        self.time_start = time.time()
+        self.last_time = time.time()
 
         # if self.action_counter == 100:
         #     raise ValueError("Error to check the robustness")
@@ -458,6 +464,9 @@ class HeuristicAgent(Agent):
                 )
 
             self.action_counter += 1
+
+            if time.time() - self.time_start > self.TOTAL_TIME_ALLOWED:
+                break
 
         self.cleanup()
 
