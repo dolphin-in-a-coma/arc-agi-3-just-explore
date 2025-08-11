@@ -1,5 +1,6 @@
 # Explore It Till You Solve It
 Exploration-only solution for ARC-AGI-3
+A bit more detailed description is in the [Report Draft](https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore/blob/main/Report_Draft.pdf). It does contain quite some LLMease. 
 
 ## Quickstart 
 This repository was originally forked from [the challenge repo](https://github.com/arcprize/ARC-AGI-3-Agents). The setup mostly mirrors the original one. Alternatively, you can run the code in [Google Colab](https://colab.research.google.com/github/dolphin-in-a-coma/arc-agi-3-just-explore/blob/main/ARC_AGI_3_Solve_by_Exploration.ipynb).
