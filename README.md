@@ -1,7 +1,7 @@
 # Explore It Till You Solve It
-Exploration-only solution for ARC-AGI-3.
+An exploration-only solution for ARC-AGI-3. In the official evaluation, it solved 12 out of 25 private levels, finishing 3rd. After correcting the graph-resetting bug post-evaluation ([commit aad8145](https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore/commit/aad8145cd54731b11cda957bfe241b71c7a14605)), it solves a median of 17 private levels (one level below the 1st-place solution), with results ranging from 14 to 19 levels across five test runs.
 
-A bit more detailed description is in the [Report Draft](https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore/blob/main/Report_Draft.pdf). It does contain quite some LLMease. 
+A more detailed description is available in the [workshop article](https://arxiv.org/abs/2512.24156), presented at the AAAI 2026 Workshop on AI for Scientific Research.
 
 ## Quickstart 
 This repository was originally forked from [the challenge repo](https://github.com/arcprize/ARC-AGI-3-Agents). The setup mostly mirrors the original one. Alternatively, you can run the code in [Google Colab](https://colab.research.google.com/github/dolphin-in-a-coma/arc-agi-3-just-explore/blob/main/ARC_AGI_3_Solve_by_Exploration.ipynb).
@@ -70,6 +70,24 @@ This is a limited but effective approach that approaches the limits of brute-for
 It can be tricked if the status bar differs significantly from the public games (e.g., integrated into the scene rather than at the edge). In such cases, the method degrades toward more random exploration because the state space implicitly includes many status bar variants. Additionally, large state spaces (e.g., `ft09` levels 3–4) can make the method intractable. Non-determinism or partial observations can also cause issues.
 
 A natural extension would be to learn simple world models that predict the next frame from the current frame and action. This could improve sample efficiency by roughly the average number of actions per frame. However, it’s unclear whether such models would help prioritize exploration of “interesting” states in these games by favoring higher uncertainty or surprise for the agent. For example, why should the correct pattern in `ft09` be more surprising than an incorrect one?
+
+## Citation
+
+If you find the work helpful for your research, please cite:
+
+E. Rudakov, J. Shock, and B. U. Cowley, *[Graph-Based Exploration for ARC-AGI-3 Interactive Reasoning Tasks](https://arxiv.org/abs/2512.24156)*, arXiv:2512.24156 (2025). DOI: 10.48550/arXiv.2512.24156
+
+```bibtex
+@misc{rudakov2025graphbased,
+  author = {Rudakov, Evgenii and Shock, Jonathan and Cowley, Benjamin Ultan},
+  title  = {Graph-Based Exploration for ARC-AGI-3 Interactive Reasoning Tasks},
+  year   = {2025},
+  eprint = {2512.24156},
+  doi    = {10.48550/arXiv.2512.24156},
+  url    = {https://arxiv.org/abs/2512.24156}
+}
+```
+
 
 ## License
 
