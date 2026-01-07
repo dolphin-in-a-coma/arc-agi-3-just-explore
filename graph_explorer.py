@@ -218,10 +218,13 @@ class GraphExplorer:
 
         if suspicious_transition:
             self.suspicious_transitions[(node, edge_idx, target_node)] = self.suspicious_transitions.get((node, edge_idx, target_node), 0) + 1
+            print(f"Suspicious transition detected: {node, edge_idx, target_node}, count: {self.suspicious_transitions[(node, edge_idx, target_node)]}")
+
             if self.suspicious_transitions[(node, edge_idx, target_node)] < self.suspicious_transitions_threshold:
-                print(f"Suspicious transition detected: {node, edge_idx, target_node}, count: {self.suspicious_transitions[(node, edge_idx, target_node)]}")
                 print(f"It will be ignored for now, but will be allowed after {self.suspicious_transitions_threshold} attempts")
                 return
+            else:
+                print(f"Transition is recorded as permanent")
         
         node_info.record_test(edge_idx, success, target_node)
         

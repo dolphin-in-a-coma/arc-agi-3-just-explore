@@ -99,6 +99,8 @@ class HeuristicAgent(Agent):
         self.time_start = time.time()
         self.last_time = time.time()
         self.minimal_step_time: float = 0.31 # seconds
+
+        self.last_transition_suspicious = False
         
         print(f'Will run for {self.TOTAL_TIME_ALLOWED/60/60} hours')
 
@@ -177,7 +179,7 @@ class HeuristicAgent(Agent):
         # if self.action_counter == 100:
         #     raise ValueError("Error to check the robustness")
 
-        if latest_frame.state in [GameState.NOT_PLAYED, GameState.GAME_OVER]:
+        if latest_frame.state in [GameState.NOT_PLAYED]:
             # if game is not started (at init or after GAME_OVER) we need to reset
             # add a small delay before resetting after GAME_OVER to avoid timeout # TODO: remove this
             action = GameAction.RESET
@@ -186,7 +188,12 @@ class HeuristicAgent(Agent):
             if self.failed:
                 self.level_up = True
                 self.failed = False
+            return action
 
+        if latest_frame.state in [GameState.GAME_OVER]:
+
+            action = GameAction.RESET
+            self.last_transition_suspicious = True
             return action
 
         if self.DEBUG_PLOTS: self.visualize_last_frame(frames)
@@ -241,7 +248,7 @@ class HeuristicAgent(Agent):
             latest_frame_np[latest_frame_np == 16] = 0 # to ensure there is no overflow 
             hashed_frame = self.frame_processor.hash_frame(latest_frame_np)
 
-            if self.level_up:
+            if self.level_up and self.favor_frontier_search:
                 self.level_first_frame = hashed_frame
                 self.graph_explorer.reset()
                 self.graph_explorer.initialize(start_node=hashed_frame, num_candidates=num_actions, group2remaining_candidate_ids=action_groups)
@@ -252,8 +259,16 @@ class HeuristicAgent(Agent):
             if self.last_hashed_frame is not None and not self.level_up:
                 transition = hashed_frame != self.last_hashed_frame 
                 suspicious_transition = hashed_frame == self.level_first_frame and num_frames > 1
+
+                if self.last_transition_suspicious:
+                    suspicious_transition = True
+                    self.last_transition_suspicious = False
+
                 # if num_frames > 1:
-                #     print('Almost suspicious transition!')
+                #     print('Many frames')
+                
+                # if hashed_frame == self.level_first_frame:
+                #     print('Returned to the first frame!')
 
                 # if not self.last_hashed_frame in self.hashed_frame2action_results:
                 #     self.hashed_frame2action_results[self.last_hashed_frame] = np.zeros(len(frame_segments))
@@ -270,12 +285,13 @@ class HeuristicAgent(Agent):
                     self.hashed_frame2action_results[self.last_hashed_frame][self.last_action] = -1
                     self.hashed_frame2transitions[self.last_hashed_frame][self.last_action] = None
                 
-                self.graph_explorer.record_test(self.last_hashed_frame, self.last_action, transition, hashed_frame, 
-                target_num_candidates=num_actions,
-                group2remaining_candidate_ids=action_groups,
-                suspicious_transition=suspicious_transition
-                )
-                self.graph_explorer.dump()
+                if self.favor_frontier_search:
+                    self.graph_explorer.record_test(self.last_hashed_frame, self.last_action, transition, hashed_frame, 
+                    target_num_candidates=num_actions,
+                    group2remaining_candidate_ids=action_groups,
+                    suspicious_transition=suspicious_transition
+                    )
+                    self.graph_explorer.dump()
                 # TODO: Add a function to assign candidate groups!
 
                 if old_value != 0 and old_value != self.hashed_frame2action_results[self.last_hashed_frame][self.last_action]:
@@ -287,16 +303,18 @@ class HeuristicAgent(Agent):
                 if self.verbose_level >= 1:
                     print(f'NEW FRAME:', end='\t')
 
-            if hashed_frame not in self.graph_explorer._nodes:
-                print('Here we are!')
-                self.graph_explorer.record_test(self.last_hashed_frame, self.last_action, transition, hashed_frame, 
-                target_num_candidates=num_actions,
-                group2remaining_candidate_ids=action_groups,
-                suspicious_transition=suspicious_transition
-                )
-            
-            if self.verbose_level >= 1:
-                print(self.graph_explorer._nodes[hashed_frame])
+            if self.favor_frontier_search:
+                # NOTE: I don't remember the purpose of this. I guess it's in case we got an Exception before we recorded the transition?
+                if hashed_frame not in self.graph_explorer._nodes:
+                    print('Here we are!')
+                    self.graph_explorer.record_test(self.last_hashed_frame, self.last_action, transition, hashed_frame, 
+                    target_num_candidates=num_actions,
+                    group2remaining_candidate_ids=action_groups,
+                    suspicious_transition=suspicious_transition
+                    )
+                
+                if self.verbose_level >= 1:
+                    print(self.graph_explorer._nodes[hashed_frame])
             # print(f'{hashed_frame} - actions: {curr_frame_action_results}')
 
             available_actions = np.where(curr_frame_action_results != -1)[0]
