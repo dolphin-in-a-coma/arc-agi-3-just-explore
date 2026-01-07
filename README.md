@@ -1,5 +1,7 @@
 # Explore It Till You Solve It
-An exploration-only solution for ARC-AGI-3. In the official evaluation, it solved 12 out of 25 private levels, finishing 3rd. After correcting the graph-resetting bug post-evaluation ([commit aad8145](https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore/commit/aad8145cd54731b11cda957bfe241b71c7a14605)), it solves a median of 17 private levels (one level below the 1st-place solution), with results ranging from 14 to 19 levels across five test runs.
+An exploration-only solution for ARC-AGI-3. In the [official evaluation](https://three.arcprize.org/leaderboard) of the ARC-AGI-3 Preview Challenge, it solved **12 out of 25 private levels**, finishing 3rd. 
+
+After correcting the graph-resetting bug post-evaluation ([commit aad8145](https://github.com/dolphin-in-a-coma/arc-agi-3-just-explore/commit/aad8145cd54731b11cda957bfe241b71c7a14605)), it solves a median of **17 private levels** (one level below the 1st-place solution), with results ranging from 14 to 19 levels across five test runs.
 
 A more detailed description is available in the [workshop article](https://arxiv.org/abs/2512.24156), presented at the AAAI 2026 Workshop on AI for Scientific Research.
 
